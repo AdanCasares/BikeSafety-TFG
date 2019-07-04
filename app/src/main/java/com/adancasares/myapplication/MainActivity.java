@@ -1,6 +1,7 @@
 package com.adancasares.myapplication;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -12,6 +13,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
+
+
 
 
 public class MainActivity extends AppCompatActivity {
@@ -64,8 +67,8 @@ public class MainActivity extends AppCompatActivity {
 
     //-----------------------------OBTENER UBICACION ACTUAL----------------------------------------
     public void obtenerUbicacion() throws InterruptedException {
-        tvLatitud = (TextView) findViewById(R.id.tvLatitud);
-        tvLongitud = (TextView) findViewById(R.id.tvLongitud);
+        tvLatitud = findViewById(R.id.tvLatitud);
+        tvLongitud = findViewById(R.id.tvLongitud);
 
         //obtiene la referecia del sistema de localizacion
         LocationManager locationManager = (LocationManager)
@@ -73,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
 
         //define las actualizaciones de localizacion
         LocationListener locationListener = new LocationListener() {
+            @SuppressLint("SetTextI18n")
             @Override
             public void onLocationChanged(Location location) {  //cuando cambia la localizacion
                 tvLatitud.setText("" + location.getLatitude());
