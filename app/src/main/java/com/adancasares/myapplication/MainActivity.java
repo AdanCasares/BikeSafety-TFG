@@ -3,6 +3,7 @@ package com.adancasares.myapplication;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -12,18 +13,22 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
-
-
 
 
 public class MainActivity extends AppCompatActivity {
 
     private final int REQUEST_ACCESS_FINE = 0;
     private int permissionCheck = 0;
+    private final int vehiculo_bicicleta = 0;
+    private final int vehiculo_coche = 1;
 
-    TextView tvLatitud;
-    TextView tvLongitud;
+    public double Latitud;
+    public double Longitud;
+
+    public int vehiculo = 0; //si es 0 es una bicicleta y si es 1 es un coche
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +57,20 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //---------------para navegar desde MainActivity hasta segundaPantalla-------------------------
+    public void onClick(View view){
+        switch (view.getId()){
+            case R.id.bicicleta:
+                vehiculo = vehiculo_bicicleta;
+                break;
+            case R.id.coche:
+                vehiculo = vehiculo_coche;
+                break;
+        }
+        Intent miIntent = new Intent(MainActivity.this,segundaPantalla.class);
+        startActivity(miIntent);
+    }
+
     //--------------------PEDIR PERMISOS PARA OBTENER LA UBICACION---------------------------------
     public void pedirPermisoUbicacion(){
         permissionCheck = ContextCompat.checkSelfPermission(this,
@@ -67,8 +86,6 @@ public class MainActivity extends AppCompatActivity {
 
     //-----------------------------OBTENER UBICACION ACTUAL----------------------------------------
     public void obtenerUbicacion() throws InterruptedException {
-        tvLatitud = findViewById(R.id.tvLatitud);
-        tvLongitud = findViewById(R.id.tvLongitud);
 
         //obtiene la referecia del sistema de localizacion
         LocationManager locationManager = (LocationManager)
@@ -79,8 +96,8 @@ public class MainActivity extends AppCompatActivity {
             @SuppressLint("SetTextI18n")
             @Override
             public void onLocationChanged(Location location) {  //cuando cambia la localizacion
-                tvLatitud.setText("" + location.getLatitude());
-                tvLongitud.setText("" + location.getLongitude());
+                Latitud = location.getLatitude();
+                Longitud = location.getLongitude();
             }
 
             @Override
