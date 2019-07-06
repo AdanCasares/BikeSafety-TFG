@@ -21,11 +21,6 @@ public class MainActivity extends AppCompatActivity {
 
     private final int REQUEST_ACCESS_FINE = 0;
     private int permissionCheck = 0;
-    private final int vehiculo_bicicleta = 0;
-    private final int vehiculo_coche = 1;
-
-    public double Latitud;
-    public double Longitud;
 
     public int vehiculo = 0; //si es 0 es una bicicleta y si es 1 es un coche
 
@@ -39,17 +34,6 @@ public class MainActivity extends AppCompatActivity {
 
         pedirPermisoUbicacion();
 
-        try {
-            obtenerUbicacion();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-
-
-
-
-
 
 
         //-----------------------------------------------------------------------------------------
@@ -57,8 +41,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    //---------------para navegar desde MainActivity hasta segundaPantalla-------------------------
+    //---------------TRAS SELECIONAR EL VEHICULO AVANZAMOS A LA SEGUNDA PANTALLA-------------------
     public void onClick(View view){
+        int vehiculo_coche = 1;
+        int vehiculo_bicicleta = 0;
         switch (view.getId()){
             case R.id.bicicleta:
                 vehiculo = vehiculo_bicicleta;
@@ -67,7 +53,9 @@ public class MainActivity extends AppCompatActivity {
                 vehiculo = vehiculo_coche;
                 break;
         }
+
         Intent miIntent = new Intent(MainActivity.this,segundaPantalla.class);
+        miIntent.putExtra("vehiculo", vehiculo);
         startActivity(miIntent);
     }
 
@@ -82,42 +70,6 @@ public class MainActivity extends AppCompatActivity {
         if (permissionCheck == PackageManager.PERMISSION_DENIED) {
             System.exit(0);
         }
-    }
-
-    //-----------------------------OBTENER UBICACION ACTUAL----------------------------------------
-    public void obtenerUbicacion() throws InterruptedException {
-
-        //obtiene la referecia del sistema de localizacion
-        LocationManager locationManager = (LocationManager)
-                MainActivity.this.getSystemService(Context.LOCATION_SERVICE);
-
-        //define las actualizaciones de localizacion
-        LocationListener locationListener = new LocationListener() {
-            @SuppressLint("SetTextI18n")
-            @Override
-            public void onLocationChanged(Location location) {  //cuando cambia la localizacion
-                Latitud = location.getLatitude();
-                Longitud = location.getLongitude();
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) { //cuando cambia el estatus
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) { //cuando el porveedor esta habilitado
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) { // cuando el proveedor esta deshabilitado
-            }
-        };
-
-        //registra las actualizaciones de localizacion recividas
-        permissionCheck = ContextCompat.checkSelfPermission(MainActivity.this,
-                Manifest.permission.ACCESS_FINE_LOCATION);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0,
-                0, locationListener);
     }
 
 
