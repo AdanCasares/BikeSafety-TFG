@@ -75,8 +75,6 @@ public class segundaPantalla extends Activity {
         obtenerListaUsuarios();
         comprobarPeligro();
 
-
-
     }
 
     //-------------OBTIENE LA LISTA DE USUARIOS QUE SE ENCUENTRAN ACTIVOS EN FIREBASE--------------
