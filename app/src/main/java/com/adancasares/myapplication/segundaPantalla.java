@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -11,6 +12,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.os.Bundle;
@@ -35,6 +37,7 @@ public class segundaPantalla extends Activity {
     public String uid;
 
     public List<Usuario> listUsuarios = new ArrayList<Usuario>();
+    public List<Usuario> listUsuariosComprobacion = new ArrayList<Usuario>();
     //ArrayAdapter<Usuario> arrayAdapterUsuarios;
 
     TextView tvVehiculo;
@@ -42,6 +45,7 @@ public class segundaPantalla extends Activity {
     TextView tvUid;
     public int vehiculo = 0;
 
+    public boolean gpsActivo = true;
     private int permissionCheck = 0;
     public double latitud = 0.00;
     public double longitud = 0.00;
@@ -74,6 +78,13 @@ public class segundaPantalla extends Activity {
         inicializarFirebase();
         obtenerListaUsuarios();
         comprobarPeligro();
+
+
+
+    }
+
+    @Override
+    public void onBackPressed(){
 
     }
 
@@ -190,6 +201,7 @@ public class segundaPantalla extends Activity {
     }
 
     //----------------COMPRUEBA QUE LA DISTANCIA AL USUARIO MAS CERCANO SEA SEGURA-----------------
+    @SuppressLint("SetTextI18n")
     private void comprobarPeligro(){
         tvEstado = findViewById(R.id.tvEstado);
 
@@ -209,7 +221,7 @@ public class segundaPantalla extends Activity {
                 distancias.add(d);
             }
             double distanciaMinima = obtenerMenorDistancia(distancias);
-            if (distanciaMinima <= 5) {
+            if (distanciaMinima <= 20) {
                 tvEstado.setText("PELIGRO");
             } else {
                 tvEstado.setText("SEGURO");
@@ -252,40 +264,87 @@ public class segundaPantalla extends Activity {
         LocationManager locationManager = (LocationManager)
                 segundaPantalla.this.getSystemService(Context.LOCATION_SERVICE);
 
-        //define las actualizaciones de localizacion
-        LocationListener locationListener = new LocationListener() {
-            @SuppressLint("SetTextI18n")
-            @Override
-            public void onLocationChanged(Location location) {  //cuando cambia la localizacion
-                latitud = location.getLatitude();
-                longitud = location.getLongitude();
+        if (gpsActivo){
+            //define las actualizaciones de localizacion
+            LocationListener locationListener = new LocationListener() {
+                @SuppressLint("SetTextI18n")
+                @Override
+                public void onLocationChanged(Location location) {  //cuando cambia la localizacion
+                    latitud = location.getLatitude();
+                    longitud = location.getLongitude();
 
-                //AQUI HAY QUE ENVIAR LA INFORMACION A FIREBASE
-                //String ubicacion = latitud + "," + longitud;
-                //Log.d("Ubicación", String.valueOf(ubicacion));
-                enviarFirebase();
-                obtenerListaUsuarios();
-                comprobarPeligro();
+                    //AQUI HAY QUE ENVIAR LA INFORMACION A FIREBASE
+                    //String ubicacion = latitud + "," + longitud;
+                    //Log.d("Ubicación", String.valueOf(ubicacion));
+                    enviarFirebase();
+                    obtenerListaUsuarios();
+                    comprobarPeligro();
+
+
+                }
+
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) { //cuando cambia el estatus
+                }
+
+                @Override
+                public void onProviderEnabled(String provider) { //cuando el porveedor esta habilitado
+                }
+
+                @Override
+                public void onProviderDisabled(String provider) { // cuando el proveedor esta deshabilitado
+                }
+            };
+
+            //registra las actualizaciones de localizacion recividas
+            permissionCheck = ContextCompat.checkSelfPermission(segundaPantalla.this,
+                    Manifest.permission.ACCESS_FINE_LOCATION);
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0,
+                    0, locationListener);
+        }
+
+    }
+
+    public void cerrarAPP(View view) {
+
+        /*boolean correcto = false;
+        do {
+            databaseReference.child("Usuario").child(uid).removeValue();
+            databaseReference.child("Usuario").addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    listUsuariosComprobacion.clear();
+                    for (DataSnapshot objSnapshot: dataSnapshot.getChildren()){
+                        Usuario usuario = objSnapshot.getValue(Usuario.class);
+                        listUsuariosComprobacion.add(usuario);
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                }
+            });
+
+            int contador = 0;
+            for (int i = 0; i < listUsuariosComprobacion.size(); i++) {
+                if (!usuario.getUid().equals(uid)) {
+                    contador++;
+                }
             }
 
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) { //cuando cambia el estatus
+            if (contador == listUsuariosComprobacion.size()){
+                correcto = true;
             }
+        }while (!correcto);*/
 
-            @Override
-            public void onProviderEnabled(String provider) { //cuando el porveedor esta habilitado
-            }
+        gpsActivo = false;
 
-            @Override
-            public void onProviderDisabled(String provider) { // cuando el proveedor esta deshabilitado
-            }
-        };
-
-        //registra las actualizaciones de localizacion recividas
-        permissionCheck = ContextCompat.checkSelfPermission(segundaPantalla.this,
-                Manifest.permission.ACCESS_FINE_LOCATION);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0,
-                0, locationListener);
+        databaseReference.child("Usuario").child(uid).removeValue();
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_HOME);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        System.exit(0);
     }
 
 
