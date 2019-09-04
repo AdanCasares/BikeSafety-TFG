@@ -1,67 +1,63 @@
 package com.adancasares.myapplication;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.net.http.HttpResponseCache;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.TextView;
 
 
 public class MainActivity extends AppCompatActivity {
 
-    private final int REQUEST_ACCESS_FINE = 0;
-    private int permissionCheck = 0;
-
-    public int vehiculo = 0; //si es 0 es una bicicleta y si es 1 es un coche
-
+    public int vehiculo = 0; //si es 0 es una bicicleta, si es 1 es un coche y si es 2 es correr.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //-----------------------------------------------------------------------------------------
-
         pedirPermisoUbicacion();
+    }
 
-
-
-        //-----------------------------------------------------------------------------------------
-
+    @Override
+    public void onBackPressed(){
 
     }
 
     //---------------TRAS SELECIONAR EL VEHICULO AVANZAMOS A LA SEGUNDA PANTALLA-------------------
     public void onClick(View view){
-        int vehiculo_coche = 1;
+
         int vehiculo_bicicleta = 0;
+        int vehiculo_coche = 1;
+        int vehiculo_correr = 2;
         switch (view.getId()){
-            case R.id.bicicleta:
+            case R.id.imBicicleta:
                 vehiculo = vehiculo_bicicleta;
+                Intent miIntentBicicleta = new Intent(MainActivity.this,NavegadorBicicleta.class);
+                miIntentBicicleta.putExtra("vehiculo", vehiculo);
+                startActivity(miIntentBicicleta);
                 break;
-            case R.id.coche:
+            case R.id.imCoche:
                 vehiculo = vehiculo_coche;
+                Intent miIntentCoche = new Intent(MainActivity.this,NavegadorCoche.class);
+                miIntentCoche.putExtra("vehiculo", vehiculo);
+                startActivity(miIntentCoche);
+                break;
+            case R.id.imCorrer:
+                vehiculo = vehiculo_correr;
+                Intent miIntentCorrer = new Intent(MainActivity.this,NavegadorCorrer.class);
+                miIntentCorrer.putExtra("vehiculo", vehiculo);
+                startActivity(miIntentCorrer);
                 break;
         }
-
-        Intent miIntent = new Intent(MainActivity.this,segundaPantalla.class);
-        miIntent.putExtra("vehiculo", vehiculo);
-        startActivity(miIntent);
     }
 
     //--------------------PEDIR PERMISOS PARA OBTENER LA UBICACION---------------------------------
     public void pedirPermisoUbicacion(){
-        permissionCheck = ContextCompat.checkSelfPermission(this,
+        int permissionCheck = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION);
 
         ActivityCompat.requestPermissions(this,
@@ -71,51 +67,4 @@ public class MainActivity extends AppCompatActivity {
             System.exit(0);
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //---------------------------------------------------------------------------------------------
-    //---------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-    //---------------------------------------------------------------------------------------------
-    //---------------------------------------------------------------------------------------------
-
-
-
-
-
-    //---------------------------------------------------------------------------------------------
-    //---------------------------------------------------------------------------------------------
-
-
-
-
-    //---------------------------------------------------------------------------------------------
-    //---------------------------------------------------------------------------------------------
-
-
-
-
-    //---------------------------------------------------------------------------------------------
-    //---------------------------------------------------------------------------------------------
-
-
-
 }

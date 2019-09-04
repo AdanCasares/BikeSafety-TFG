@@ -4,12 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/fondo"
     tools:context=".MainActivity">
 
     <TextView
         android:id="@+id/Titulo"
-        android:layout_width="340dp"
-        android:layout_height="69dp"
+        android:layout_width="252dp"
+        android:layout_height="79dp"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="8dp"
@@ -17,20 +18,44 @@
         android:layout_marginRight="8dp"
         android:layout_marginBottom="8dp"
         android:gravity="center"
-        android:text="Seleccione el tipo de vehiculo:"
-        android:textSize="24sp"
+        android:text="Seleccione el tipo de actividad:"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:textSize="30sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/imBicicleta"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.496"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.806" />
+
+
+    <ImageView
+        android:id="@+id/imBicicleta"
+        android:layout_width="180dp"
+        android:layout_height="114dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginBottom="8dp"
+        android:onClick="onClick"
+        android:scaleType="centerInside"
+        android:tint="#FFFFFF"
+        app:layout_constraintBottom_toTopOf="@+id/imCoche"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.143" />
+        app:layout_constraintVertical_bias="1.0"
+        app:srcCompat="@drawable/imbicicleta" />
 
-    <ImageButton
-        android:id="@+id/bicicleta"
-        android:layout_width="152dp"
-        android:layout_height="108dp"
+    <ImageView
+        android:id="@+id/imCoche"
+        android:layout_width="257dp"
+        android:layout_height="134dp"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="8dp"
@@ -38,30 +63,33 @@
         android:layout_marginRight="8dp"
         android:layout_marginBottom="8dp"
         android:onClick="onClick"
+        android:scaleType="centerCrop"
+        android:tint="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.502"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.388"
-        app:srcCompat="@drawable/bicicleta" />
+        app:layout_constraintVertical_bias="0.573"
+        app:srcCompat="@drawable/imcoche" />
 
-    <ImageButton
-        android:id="@+id/coche"
-        android:onClick="onClick"
-        android:layout_width="153dp"
-        android:layout_height="109dp"
+    <ImageView
+        android:id="@+id/imCorrer"
+        android:layout_width="139dp"
+        android:layout_height="143dp"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginBottom="8dp"
+        android:onClick="onClick"
+        android:scaleType="centerInside"
+        android:tint="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.666"
-        app:srcCompat="@drawable/coche" />
+        app:layout_constraintTop_toBottomOf="@+id/imCoche"
+        app:layout_constraintVertical_bias="0.0"
+        app:srcCompat="@drawable/imcorrer" />
 
 </android.support.constraint.ConstraintLayout>

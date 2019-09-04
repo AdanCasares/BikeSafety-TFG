@@ -6,6 +6,7 @@ public class Usuario {
     private int vehiculo;
     private double longitud;
     private double latitud;
+    private int emergencia;
 
     public Usuario() {
     }
@@ -40,5 +41,11 @@ public class Usuario {
 
     public void setLatitud(double latitud) {
         this.latitud = latitud;
+    }
+
+    public int getEmergencia() { return emergencia; }
+
+    public void setEmergencia(int emergencia) {
+        this.emergencia = emergencia;
     }
 }

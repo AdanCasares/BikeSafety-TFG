@@ -8,17 +8,15 @@ import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.MediaPlayer;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
-import android.os.Bundle;
-//import android.util.Log;
+import android.widget.ImageView;
 
-import com.google.android.gms.dynamic.IFragmentWrapper;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -28,59 +26,81 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
-public class segundaPantalla extends Activity {
+public class NavegadorBicicleta extends Activity {
 
     FirebaseDatabase firebaseDatabase;
     DatabaseReference databaseReference;
     public String uid;
 
-    public List<Usuario> listUsuarios = new ArrayList<Usuario>();
-    public List<Usuario> listUsuariosComprobacion = new ArrayList<Usuario>();
-    //ArrayAdapter<Usuario> arrayAdapterUsuarios;
+    public List<Usuario> listUsuariosEmergencia = new ArrayList<Usuario>();
 
-    TextView tvVehiculo;
-    TextView tvEstado;
-    TextView tvUid;
+    ImageView trianguloEmergencia;
     public int vehiculo = 0;
 
     public boolean gpsActivo = true;
-    private int permissionCheck = 0;
+    public boolean alertaVozEmergenciaActiva = true;
     public double latitud = 0.00;
     public double longitud = 0.00;
-    public double R_Tierra = 6371000.00;  //Radio de la Tierra.
-    double diferenciaLatitud = 0.00;
-    double diferenciaLongitud = 0.00;
-    double a = 0.00;
-    double c = 0.00;
-    double distancia = 0.00;
+    public int emergencia = 0; // si es 0 no hay emergencia y si es un 1 si hay una emergencia.
+
+    MediaPlayer mpEmergencia = new MediaPlayer();
 
     Usuario usuario = new Usuario();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_segunda_pantalla);
+        setContentView(R.layout.activity_navegador_bicicleta);
+
+        mpEmergencia = MediaPlayer.create(this, R.raw.emergencia);
+        trianguloEmergencia = findViewById(R.id.imemergencia);
 
         usuario.setUid(UUID.randomUUID().toString());
         uid = usuario.getUid();
-        tvUid = findViewById(R.id.tvUid);
-        tvUid.setText(uid);
 
+        /*
+        try {
+            obtenerUbicacion();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        */
+
+        leerVehiculo();
+        inicializarFirebase();
+
+        //SE HA CAMBIADO ESTO DE ARRIBA A AQUI ABAJO
         try {
             obtenerUbicacion();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        leerVehiculo();
-        inicializarFirebase();
-        obtenerListaUsuarios();
-        comprobarPeligro();
+        obtenerListaUsuariosEmergencia();
+        comprobarPeligroEmergencia();
 
+        Timer timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                enviarFirebase();
+                obtenerListaUsuariosEmergencia();
+                comprobarPeligroEmergencia();
+            }
+        };
+        timer.schedule(task, 1000, 1000);
+    }
 
-
+    @Override
+    protected void onDestroy() {
+        databaseReference.child("Usuario").child(uid).removeValue();
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_HOME);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        super.onDestroy();
     }
 
     @Override
@@ -89,18 +109,18 @@ public class segundaPantalla extends Activity {
     }
 
     //-------------OBTIENE LA LISTA DE USUARIOS QUE SE ENCUENTRAN ACTIVOS EN FIREBASE--------------
-    private void obtenerListaUsuarios() {
+    private void obtenerListaUsuariosEmergencia() {
         databaseReference.child("Usuario").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                listUsuarios.clear();
+                listUsuariosEmergencia.clear();
                 for (DataSnapshot objSnapshot: dataSnapshot.getChildren()){
                     Usuario usuario = objSnapshot.getValue(Usuario.class);
-                    if (!usuario.getUid().equals(uid)) {
-                        listUsuarios.add(usuario);
+                    //obtenemos la lista de usuarios en emergencia
+                    if (!usuario.getUid().equals(uid) && usuario.getEmergencia()==1) {
+                        listUsuariosEmergencia.add(usuario);
                     }
                 }
-
             }
 
             @Override
@@ -179,9 +199,7 @@ public class segundaPantalla extends Activity {
                         * (-3 + 4 * sinSigma * sinSigma)
                         * (-3 + 4 * cos2SigmaM * cos2SigmaM)));
 
-        double s = b * A * (sigma - deltaSigma);
-
-        return s;
+        return (b * A * (sigma - deltaSigma));
     }
 
     public double obtenerMenorDistancia(List distancias){
@@ -202,58 +220,60 @@ public class segundaPantalla extends Activity {
 
     //----------------COMPRUEBA QUE LA DISTANCIA AL USUARIO MAS CERCANO SEA SEGURA-----------------
     @SuppressLint("SetTextI18n")
-    private void comprobarPeligro(){
-        tvEstado = findViewById(R.id.tvEstado);
+    private void comprobarPeligroEmergencia(){
+        //tvEstado = findViewById(R.id.tvEstado);
 
-        if (listUsuarios.isEmpty()){
-            tvEstado.setText("SEGURO");
-        }
-        else {
+        if (!listUsuariosEmergencia.isEmpty()){ //hay alguien en emergencia
             double suLatitud = 0.00;
             double suLongitud = 0.00;
-            tvEstado = findViewById(R.id.tvEstado);
+            //tvEstado = findViewById(R.id.tvEstado);
             List<Double> distancias = new ArrayList<Double>();
 
-            for (int i = 0; i < listUsuarios.size(); i++) {
-                suLatitud = listUsuarios.get(i).getLatitud();
-                suLongitud = listUsuarios.get(i).getLongitud();
+            for (int i = 0; i < listUsuariosEmergencia.size(); i++) {
+                suLatitud = listUsuariosEmergencia.get(i).getLatitud();
+                suLongitud = listUsuariosEmergencia.get(i).getLongitud();
                 double d = calcularDistacia(latitud, longitud, suLatitud, suLongitud);
                 distancias.add(d);
             }
             double distanciaMinima = obtenerMenorDistancia(distancias);
-            if (distanciaMinima <= 20) {
-                tvEstado.setText("PELIGRO");
-            } else {
-                tvEstado.setText("SEGURO");
+            if (distanciaMinima <= 400) {
+                if (alertaVozEmergenciaActiva) {
+                    trianguloEmergencia.setImageResource(R.drawable.triangulopeligro);
+                    mpEmergencia.start();
+                    alertaVozEmergenciaActiva = false;
+                }
             }
+            else{
+                trianguloEmergencia.setImageResource(R.drawable.triangulotranquilo);
+                alertaVozEmergenciaActiva = true;
+            }
+        }
+        else{
+            trianguloEmergencia.setImageResource(R.drawable.triangulotranquilo);
+            alertaVozEmergenciaActiva = true;
         }
     }
 
     //------------------INICIALIZA LA CONEXION CON LA BASE DE DATOS FIREBASE-----------------------
     private void inicializarFirebase(){
         FirebaseApp.initializeApp(this);
-        firebaseDatabase = firebaseDatabase.getInstance();
+        firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
     }
 
     //------LEE LA INFORMACION DEL MAINACTIVITY Y NOS INDICA EL TIPO DE VEHICULO SELECIONADO-------
+    @SuppressLint("SetTextI18n")
     public void leerVehiculo(){
-        tvVehiculo = findViewById(R.id.tvVehiculo);
         Bundle bundle = this.getIntent().getExtras();
+        assert bundle != null;
         vehiculo = bundle.getInt("vehiculo");
-
-        if(vehiculo==0){
-            tvVehiculo.setText("Bicicleta");
-        }
-        else if(vehiculo==1){
-            tvVehiculo.setText("Coche");
-        }
     }
 
     public void enviarFirebase(){
         usuario.setLatitud(latitud);
         usuario.setLongitud(longitud);
         usuario.setVehiculo(vehiculo);
+        usuario.setEmergencia(emergencia);
         databaseReference.child("Usuario").child(usuario.getUid()).setValue(usuario);
     }
 
@@ -262,7 +282,7 @@ public class segundaPantalla extends Activity {
 
         //obtiene la referecia del sistema de localizacion
         LocationManager locationManager = (LocationManager)
-                segundaPantalla.this.getSystemService(Context.LOCATION_SERVICE);
+                NavegadorBicicleta.this.getSystemService(Context.LOCATION_SERVICE);
 
         if (gpsActivo){
             //define las actualizaciones de localizacion
@@ -274,13 +294,9 @@ public class segundaPantalla extends Activity {
                     longitud = location.getLongitude();
 
                     //AQUI HAY QUE ENVIAR LA INFORMACION A FIREBASE
-                    //String ubicacion = latitud + "," + longitud;
-                    //Log.d("Ubicación", String.valueOf(ubicacion));
                     enviarFirebase();
-                    obtenerListaUsuarios();
-                    comprobarPeligro();
-
-
+                    obtenerListaUsuariosEmergencia();
+                    comprobarPeligroEmergencia();
                 }
 
                 @Override
@@ -297,7 +313,7 @@ public class segundaPantalla extends Activity {
             };
 
             //registra las actualizaciones de localizacion recividas
-            permissionCheck = ContextCompat.checkSelfPermission(segundaPantalla.this,
+            int permissionCheck = ContextCompat.checkSelfPermission(NavegadorBicicleta.this,
                     Manifest.permission.ACCESS_FINE_LOCATION);
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0,
                     0, locationListener);
@@ -305,53 +321,23 @@ public class segundaPantalla extends Activity {
 
     }
 
-    public void cerrarAPP(View view) {
-
-        /*boolean correcto = false;
-        do {
-            databaseReference.child("Usuario").child(uid).removeValue();
-            databaseReference.child("Usuario").addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    listUsuariosComprobacion.clear();
-                    for (DataSnapshot objSnapshot: dataSnapshot.getChildren()){
-                        Usuario usuario = objSnapshot.getValue(Usuario.class);
-                        listUsuariosComprobacion.add(usuario);
-                    }
-                }
-
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                }
-            });
-
-            int contador = 0;
-            for (int i = 0; i < listUsuariosComprobacion.size(); i++) {
-                if (!usuario.getUid().equals(uid)) {
-                    contador++;
-                }
-            }
-
-            if (contador == listUsuariosComprobacion.size()){
-                correcto = true;
-            }
-        }while (!correcto);*/
-
+    public void onClickEmergencia(View view){
+        Intent miIntent = new Intent(NavegadorBicicleta.this,NavegadorEmergencia.class);
+        miIntent.putExtra("vehiculo", vehiculo);
+        miIntent.putExtra("longitud", longitud);
+        miIntent.putExtra("latitud", latitud);
         gpsActivo = false;
-
         databaseReference.child("Usuario").child(uid).removeValue();
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_HOME);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
+        startActivity(miIntent);
         System.exit(0);
     }
 
+    public void cerrarAPP(View view) {
 
-
-
-
-
-
-
+        Intent miIntent = new Intent(NavegadorBicicleta.this,MainActivity.class);
+        gpsActivo = false;
+        databaseReference.child("Usuario").child(uid).removeValue();
+        startActivity(miIntent);
+        System.exit(0);
+    }
 }
